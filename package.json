@@ -1,0 +1,27 @@
+{
+  "name": "my-back",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --watch src --exec \"node --experimental-modules src/index.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomoRiku3/poliapp-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TomoRiku3/poliapp-backend/issues"
+  },
+  "homepage": "https://github.com/TomoRiku3/poliapp-backend#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
