@@ -1,3 +1,18 @@
+// 1) Create your fake repo up front
+const mockUserRepo = {
+  findOne: jest.fn(),
+  create:  jest.fn(),
+  save:    jest.fn(),
+};
+
+// 2) Tell Jest to mock the data-source module *before* we import the controller
+jest.mock('../../../src/config/data-source', () => ({
+  AppDataSource: {
+    // every call to getRepository() returns our fake
+    getRepository: () => mockUserRepo
+  }
+}));
+
 // src/controllers/authController.test.ts
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
@@ -7,15 +22,7 @@ import { registerController, loginController } from '../../../src/controllers/au
 import { User } from '../../../src/entities/User';
 
 describe('authController', () => {
-  const mockUserRepo = {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-  };
-
   beforeAll(() => {
-    // stub out TypeORM repository
-    jest.spyOn(AppDataSource, 'getRepository').mockReturnValue(mockUserRepo as any);
     // @ts-ignore: we know this returns a Promise<string> in our code
     // stub bcrypt & jwt
     jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
