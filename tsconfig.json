@@ -10,8 +10,10 @@
     "outDir": "dist",
     "sourceMap": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest"],
+    "typeRoots": ["node_modules/@types"],
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.test.ts", "test/**/*.ts", "test/unittests/controllers/authController.test.ts" ],
   "exclude": ["node_modules"]
 }

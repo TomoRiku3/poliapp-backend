@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'users' })
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -18,12 +18,13 @@ export class User {
   @Column({ type: 'text', unique: true })
   email!: string;
 
-  @Column({ type: 'text' })
-  password_hash!: string;
+  // Store a bcrypt hash, not the raw password
+  @Column({ type: 'text', name: 'password_hash' })
+  passwordHash!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at!: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at!: Date;
+  updatedAt!: Date;
 }
