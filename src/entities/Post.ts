@@ -1,25 +1,31 @@
 // src/entities/Post.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity, PrimaryGeneratedColumn, Column,
+  ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn
+} from 'typeorm';
 import { User } from './User';
 import { Media } from './Media';
 
 @Entity('posts')
 export class Post {
-  @PrimaryGeneratedColumn()
-  id!: number;             
+  @PrimaryGeneratedColumn()          id!: number;
 
-  @ManyToOne(() => User, user => user.posts, { onDelete: 'CASCADE' })
-  author!: User;          
+  @ManyToOne(() => User, u => u.posts, { onDelete: 'CASCADE' })
+                                     author!: User;
 
-  @Column('text', { nullable: true })
-  text?: string;
+  @Column('text', { nullable: true }) text?: string;
 
-  @OneToMany(() => Media, media => media.post, { cascade: true })
-  media!: Media[];        
+  @OneToMany(() => Media, m => m.post, { cascade: true })
+                                     media!: Media[];
 
-  @CreateDateColumn()
-  createdAt!: Date;         
+  // ← new: parent post, if this is a reply
+  @ManyToOne(() => Post, p => p.replies, { nullable: true, onDelete: 'CASCADE' })
+                                     parent?: Post;
 
-  @UpdateDateColumn()
-  updatedAt!: Date;       
+  // ← new: back-relation to fetch replies
+  @OneToMany(() => Post, p => p.parent)
+                                     replies!: Post[];
+
+  @CreateDateColumn()                createdAt!: Date;
+  @UpdateDateColumn()                updatedAt!: Date;
 }

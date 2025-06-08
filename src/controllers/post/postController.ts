@@ -5,6 +5,7 @@ import { Post } from '../../entities/Post';
 import { Media } from '../../entities/Media';
 import { uploadObject } from '../../services/storage';
 import { StatusCodes } from '../../constants/statusCode';
+import { User } from '../../entities/User';
 
 // api/post
 export async function createPostController(
@@ -70,6 +71,74 @@ export async function getPostController(
     }
 
     res.json(post);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST api/post/:id/reply
+export async function replyToPostController(
+  req: Request, res: Response, next: NextFunction
+) {
+  try {
+    const parentId = Number(req.params.id);
+    const authorId = (req as any).userId as number;
+    if (Number.isNaN(parentId)) {
+      res.status(400).json({ error: 'Invalid post id' });
+      return;
+    }
+
+    // 1) confirm the parent exists
+    const postRepo = AppDataSource.getRepository(Post);
+    const parent = await postRepo.findOne({ where: { id: parentId } });
+    if (!parent) {
+      res.status(404).json({ error: 'Parent post not found' });
+      return;
+    }
+
+    // 2) create reply
+    const { text } = req.body;
+    const reply = postRepo.create({
+      author: { id: authorId } as User,
+      text,
+      parent: { id: parentId } as any
+    });
+    const saved = await postRepo.save(reply);
+    res.status(201).json({ postId: saved.id });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET api/post/:id/replies
+export async function getRepliesController(
+  req: Request, res: Response, next: NextFunction
+) {
+  try {
+    const postId = Number(req.params.id);
+    const page   = Math.max(1, Number(req.query.page)   || 1);
+    const limit  = Math.max(1, Number(req.query.limit)  || 20);
+
+    if (Number.isNaN(postId)) {
+      res.status(400).json({ error: 'Invalid post id' });
+      return;
+    }
+
+    const postRepo = AppDataSource.getRepository(Post);
+    const [ items, total ] = await postRepo.findAndCount({
+      where: { parent: { id: postId } },
+      relations: ['author','media'],
+      order: { createdAt: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+
+    res.json({
+      page,
+      limit,
+      total,
+      replies: items
+    });
   } catch (err) {
     next(err);
   }

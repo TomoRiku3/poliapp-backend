@@ -1,7 +1,12 @@
 // src/routes/postRoutes.ts
 import express from 'express';
 import multer from 'multer';
-import { createPostController, getPostController } from '../controllers/post/postController';
+import { 
+    createPostController, 
+    getPostController,
+    replyToPostController,
+    getRepliesController
+} from '../controllers/post/postController';
 
 const router = express.Router();
 const upload = multer(); // memory storage for buffer upload
@@ -12,5 +17,9 @@ router.post('/', upload.array('media'), createPostController);
 
 // /api/posts/:id
 router.get('/:id', getPostController);
+
+// /api/posts/:id/replies
+router.post('/:id/replies', replyToPostController);
+router.get( '/:id/replies', getRepliesController);
 
 export default router;
