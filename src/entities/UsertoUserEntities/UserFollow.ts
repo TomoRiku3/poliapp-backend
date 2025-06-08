@@ -3,7 +3,7 @@ import {
   Entity, PrimaryGeneratedColumn,
   ManyToOne, CreateDateColumn
 } from 'typeorm';
-import { User } from './User';
+import { User } from '../User';
 
 @Entity('user_follows')
 export class UserFollow {

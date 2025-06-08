@@ -7,9 +7,10 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { UserFollow } from './UserFollow';
-import { FollowRequest } from './FollowRequest';
+import { UserFollow } from './UsertoUserEntities/UserFollow';
+import { FollowRequest } from './UsertoUserEntities/FollowRequest';
 import { Notification } from './Notification';
+import { UserBlock } from './UsertoUserEntities/UserBlock';
 
 @Entity('users')
 export class User {
@@ -48,4 +49,12 @@ export class User {
 
   @OneToMany(() => Notification, n => n.user)
   notifications!: Notification[];
+
+  // users I have blocked
+  @OneToMany(() => UserBlock, ub => ub.blocker)
+  blocks!: UserBlock[];
+
+  // users who have blocked me
+  @OneToMany(() => UserBlock, ub => ub.blocked)
+  blockedBy!: UserBlock[];
 }

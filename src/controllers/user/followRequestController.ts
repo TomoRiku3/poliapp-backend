@@ -1,10 +1,11 @@
 // src/controllers/followRequestController.ts
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../config/data-source';
-import { FollowRequest, FollowRequestStatus } from '../../entities/FollowRequest';
-import { UserFollow } from '../../entities/UserFollow';
+import { FollowRequest, FollowRequestStatus } from '../../entities/UsertoUserEntities/FollowRequest';
+import { UserFollow } from '../../entities/UsertoUserEntities/UserFollow';
 import { Notification, NotificationType } from '../../entities/Notification';
 import { User } from '../../entities/User';
+import { UserBlock } from '../../entities/UsertoUserEntities/UserBlock';
 
 export async function createFollowRequestController(
   req: Request,
@@ -26,6 +27,16 @@ export async function createFollowRequestController(
     const targetUser = await userRepo.findOne({ where: { id: targetId } });
     if (!targetUser) {
       res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if blocked
+    const blockRepo = AppDataSource.getRepository(UserBlock);
+    const isBlocked = await blockRepo.findOne({
+      where: { blocker: { id: targetId }, blocked: { id: requesterId } }
+    });
+    if (isBlocked) {
+      res.status(204).end(); // No content, silently ignore
       return;
     }
     const frRepo = AppDataSource.getRepository(FollowRequest);

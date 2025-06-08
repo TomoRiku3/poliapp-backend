@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../config/data-source';
 import { User } from '../../entities/User';
-import { UserFollow } from '../../entities/UserFollow';
+import { UserFollow } from '../../entities/UsertoUserEntities/UserFollow';
 
 export async function getUserFollowingController(
   req: Request,

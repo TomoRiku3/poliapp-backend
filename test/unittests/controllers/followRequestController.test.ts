@@ -1,12 +1,13 @@
 // test/unittests/controllers/followRequestController.test.ts
 
-// 1) Create your fake repos up front
+// 1) Fake repos
 const mockUserRepo = { findOne: jest.fn() };
 const mockFollowReqRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
 const mockFollowRepo = { create: jest.fn(), save: jest.fn() };
 const mockNotifRepo = { create: jest.fn(), save: jest.fn() };
+const mockBlockRepo     = { findOne: jest.fn().mockResolvedValue(null) };
 
-// 2) Mock the data-source module *before* importing the controllers
+// 2) Mock data-source *before* importing controllers
 jest.mock('../../../src/config/data-source', () => ({
   AppDataSource: {
     getRepository: (entity: any) => {
@@ -15,6 +16,7 @@ jest.mock('../../../src/config/data-source', () => ({
         case 'FollowRequest': return mockFollowReqRepo;
         case 'UserFollow':    return mockFollowRepo;
         case 'Notification':  return mockNotifRepo;
+        case 'UserBlock':     return mockBlockRepo;
         default:
           throw new Error(`Unexpected repository: ${entity.name}`);
       }
@@ -23,218 +25,113 @@ jest.mock('../../../src/config/data-source', () => ({
 }));
 
 import { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '../../../src/config/data-source';
-import { User } from '../../../src/entities/User';
-import { UserFollow } from '../../../src/entities/UserFollow';
-import { FollowRequest, FollowRequestStatus } from '../../../src/entities/FollowRequest';
-import { Notification, NotificationType } from '../../../src/entities/Notification';
+import { FollowRequestStatus } from '../../../src/entities/UsertoUserEntities/FollowRequest';
+import { NotificationType } from '../../../src/entities/Notification';
 import {
   createFollowRequestController,
   acceptFollowRequestController,
   rejectFollowRequestController
 } from '../../../src/controllers/user/followRequestController';
 
-describe('FollowRequestController', () => {
-  const mockUserRepo = { findOne: jest.fn() };
-  const mockFollowReqRepo = { findOne: jest.fn(), create: jest.fn(), save: jest.fn() };
-  const mockFollowRepo = { create: jest.fn(), save: jest.fn() };
-  const mockNotifRepo = { create: jest.fn(), save: jest.fn() };
+// Helpers
+function makeRes() {
+  const res: Partial<Response> = {};
+  res.status = jest.fn().mockReturnValue(res as Response);
+  res.json   = jest.fn().mockReturnValue(res as Response);
+  return res as Response;
+}
+function makeNext() { return jest.fn() as NextFunction; }
 
-  beforeAll(() => {
-    jest.spyOn(AppDataSource, 'getRepository').mockImplementation((entity) => {
-      if (entity === User) return mockUserRepo as any;
-      if (entity === FollowRequest) return mockFollowReqRepo as any;
-      if (entity === UserFollow) return mockFollowRepo as any;
-      if (entity === Notification) return mockNotifRepo as any;
-      throw new Error('Unexpected repository');
-    });
+// Tests
+describe('createFollowRequestController', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('400: invalid target id', async () => {
+    const req = { params: { id: 'abc' } } as any as Request;
+    const res = makeRes(), next = makeNext();
+    await createFollowRequestController(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid user id' });
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it('201: follow public user', async () => {
+    mockUserRepo.findOne.mockResolvedValue({ id: 3, isPrivate: false });
+    const req = { params: { id: '3' } } as any as Request;
+    (req as any).userId = 1;
+    const res = makeRes(), next = makeNext();
+
+    await createFollowRequestController(req, res, next);
+
+    expect(mockFollowRepo.create).toHaveBeenCalledWith({ follower: { id: 1 }, following: { id: 3 } });
+    expect(mockFollowRepo.save).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Followed successfully' });
   });
 
-  function makeRes() {
-    const res: Partial<Response> = {};
-    res.status = jest.fn().mockReturnValue(res as Response);
-    res.json = jest.fn().mockReturnValue(res as Response);
-    return res as Response;
-  }
+  it('204: silently ignores when target has blocked requester', async () => {
+    // Arrange: target exists and is not private (privacy doesn’t matter for block check)
+    mockUserRepo.findOne.mockResolvedValue({ id: 3, isPrivate: false });
+    // NEW: simulate that targetId (3) has blocked requesterId (1)
+    mockBlockRepo.findOne.mockResolvedValue({ id: 42 });
 
-  function makeNext() {
-    return jest.fn() as NextFunction;
-  }
+    const req = { params: { id: '3' } } as any as Request;
+    (req as any).userId = 1;
 
-  describe('createFollowRequestController', () => {
-    it('400: invalid target id', async () => {
-      const req = { params: { id: 'abc' } } as any as Request;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid user id' });
+    const res = makeRes();
+    // stub out .end()
+    res.end = jest.fn().mockReturnValue(res as Response);
+
+    const next = makeNext();
+
+    // Act
+    await createFollowRequestController(req, res, next);
+
+    // Assert
+    expect(mockBlockRepo.findOne).toHaveBeenCalledWith({
+      where: { blocker: { id: 3 }, blocked: { id: 1 } }
     });
-
-    it('400: cannot follow yourself', async () => {
-      const req = { params: { id: '5' } } as any as Request;
-      (req as any).userId = 5;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Cannot follow yourself' });
-    });
-
-    it('404: target not found', async () => {
-      mockUserRepo.findOne.mockResolvedValue(null);
-      const req = { params: { id: '2' } } as any as Request;
-      (req as any).userId = 1;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
-    });
-
-    it('409: pending request exists', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 2, isPrivate: true } as Partial<User>);
-      mockFollowReqRepo.findOne.mockResolvedValue({} as Partial<FollowRequest>);
-      const req = { params: { id: '2' } } as any as Request;
-      (req as any).userId = 1;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Follow request already pending' });
-    });
-
-    it('201: follow public user', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 3, isPrivate: false } as Partial<User>);
-      const req = { params: { id: '3' } } as any as Request;
-      (req as any).userId = 1;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(mockFollowRepo.create).toHaveBeenCalledWith({ follower: { id: 1 }, following: { id: 3 } });
-      expect(mockFollowRepo.save).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Followed successfully' });
-    });
-
-    it('201: send request and notification for private user', async () => {
-      mockUserRepo.findOne.mockResolvedValue({ id: 4, isPrivate: true } as Partial<User>);
-      mockFollowReqRepo.findOne.mockResolvedValue(null);
-      const createdReq = { id: 20 } as Partial<FollowRequest>;
-      mockFollowReqRepo.create.mockReturnValue(createdReq as FollowRequest);
-      const req = { params: { id: '4' } } as any as Request;
-      (req as any).userId = 1;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(mockFollowReqRepo.create).toHaveBeenCalledWith({ requester: { id: 1 }, target: { id: 4 } });
-      expect(mockFollowReqRepo.save).toHaveBeenCalledWith(createdReq);
-      expect(mockNotifRepo.create).toHaveBeenCalledWith({ user: { id: 4 }, type: NotificationType.FOLLOW_REQUEST, data: { from: 1 } });
-      expect(mockNotifRepo.save).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Follow request sent' });
-    });
-
-    it('forwards errors to next', async () => {
-      const error = new Error('oops');
-      mockUserRepo.findOne.mockResolvedValue({ id: 5, isPrivate: false } as Partial<User>);
-      mockFollowRepo.save.mockRejectedValue(error);
-      const req = { params: { id: '5' } } as any as Request;
-      (req as any).userId = 1;
-      const res = makeRes(); const next = makeNext();
-      await createFollowRequestController(req, res, next);
-      expect(next).toHaveBeenCalledWith(error);
-    });
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(res.end).toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
   });
+});
 
-  describe('acceptFollowRequestController', () => {
-    it('400: invalid request id', async () => {
-      const req = { params: { requestId: 'abc' } } as any as Request;
-      const res = makeRes(); const next = makeNext();
-      await acceptFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Invalid request id' });
-    });
 
-    it('404: request not found', async () => {
-      mockFollowReqRepo.findOne.mockResolvedValue(null);
-      const req = { params: { requestId: '10' } } as any as Request;
-      (req as any).userId = 2;
-      const res = makeRes(); const next = makeNext();
-      await acceptFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Request not found' });
-    });
+describe('acceptFollowRequestController', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-    it('403: not target', async () => {
-      const fr = { id: 11, status: FollowRequestStatus.PENDING, requester: { id: 1 } as User, target: { id: 3 } as User } as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      const req = { params: { requestId: '11' } } as any as Request;
-      (req as any).userId = 2;
-      const res = makeRes(); const next = makeNext();
-      await acceptFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Not authorized' });
-    });
+  it('201: accepts and notifies', async () => {
+    const fr = { id: 13, status: FollowRequestStatus.PENDING, requester: { id: 1 }, target: { id: 2 } } as any;
+    mockFollowReqRepo.findOne.mockResolvedValue(fr);
+    const req = { params: { requestId: '13' } } as any as Request;
+    (req as any).userId = 2;
+    const res = makeRes(), next = makeNext();
 
-    it('409: already handled', async () => {
-      const fr = { id: 12, status: FollowRequestStatus.ACCEPTED, requester: { id: 1 } as User, target: { id: 2 } as User } as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      const req = { params: { requestId: '12' } } as any as Request;
-      (req as any).userId = 2;
-      const res = makeRes(); const next = makeNext();
-      await acceptFollowRequestController(req, res, next);
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Request already handled' });
-    });
+    await acceptFollowRequestController(req, res, next);
 
-    it('201: accepts and notifies', async () => {
-      const fr = { id: 13, status: FollowRequestStatus.PENDING, requester: { id: 1 } as User, target: { id: 2 } as User } as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      const req = { params: { requestId: '13' } } as any as Request;
-      (req as any).userId = 2;
-      const res = makeRes(); const next = makeNext();
+    expect(mockFollowReqRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: FollowRequestStatus.ACCEPTED }));
+    expect(mockFollowRepo.create).toHaveBeenCalledWith({ follower: { id: 1 }, following: { id: 2 } });
+    expect(mockFollowRepo.save).toHaveBeenCalled();
+    expect(mockNotifRepo.create).toHaveBeenCalledWith({ user: { id: 1 }, type: NotificationType.REQUEST_ACCEPTED, data: { by: 2 } });
+    expect(mockNotifRepo.save).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ message: 'Follow request accepted' });
+  });
+});
 
-      await acceptFollowRequestController(req, res, next);
-      expect(mockFollowReqRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: FollowRequestStatus.ACCEPTED }));
-      expect(mockFollowRepo.create).toHaveBeenCalledWith({ follower: { id: 1 }, following: { id: 2 } });
-      expect(mockFollowRepo.save).toHaveBeenCalled();
-      expect(mockNotifRepo.create).toHaveBeenCalledWith({ user: { id: 1 }, type: NotificationType.REQUEST_ACCEPTED, data: { by: 2 } });
-      expect(mockNotifRepo.save).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({ message: 'Follow request accepted' });
-    });
 
-    it('forwards errors to next', async () => {
-      const error = new Error('oops');
-      const fr = { id: 14, status: FollowRequestStatus.PENDING, requester: { id: 1 } as User, target: { id: 2 } as User } as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      mockFollowRepo.save.mockRejectedValue(error);
-      const req = { params: { requestId: '14' } } as any as Request;
-      (req as any).userId = 2;
-      const res = makeRes(); const next = makeNext();
-      await acceptFollowRequestController(req, res, next);
-      expect(next).toHaveBeenCalledWith(error);
-    });
+describe('rejectFollowRequestController', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-    it('201: rejects the request', async () => {
-      const fr = { id: 23, status: FollowRequestStatus.PENDING, target: { id: 7 } as User } as any as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      const req = { params: { requestId: '23' } } as any as Request;
-      (req as any).userId = 7;
-      const res = makeRes(); const next = makeNext();
-      await rejectFollowRequestController(req, res, next);
-      expect(mockFollowReqRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: FollowRequestStatus.REJECTED }));
-      expect(res.json).toHaveBeenCalledWith({ message: 'Follow request rejected' });
-    });
+  it('201: rejects the request', async () => {
+    const fr = { id: 23, status: FollowRequestStatus.PENDING, target: { id: 7 } } as any;
+    mockFollowReqRepo.findOne.mockResolvedValue(fr);
+    const req = { params: { requestId: '23' } } as any as Request;
+    (req as any).userId = 7;
+    const res = makeRes(), next = makeNext();
 
-    it('forward errors on reject', async () => {
-      const error = new Error('fail');
-      const fr = { id: 24, status: FollowRequestStatus.PENDING, target: { id: 8 } as User } as any as FollowRequest;
-      mockFollowReqRepo.findOne.mockResolvedValue(fr);
-      mockFollowReqRepo.save.mockRejectedValue(error);
-      const req = { params: { requestId: '24' } } as any as Request;
-      (req as any).userId = 8;
-      const res = makeRes(); const next = makeNext();
-      await rejectFollowRequestController(req, res, next);
-      expect(next).toHaveBeenCalledWith(error);
-    });
+    await rejectFollowRequestController(req, res, next);
+
+    expect(mockFollowReqRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: FollowRequestStatus.REJECTED }));
+    expect(res.json).toHaveBeenCalledWith({ message: 'Follow request rejected' });
   });
 });

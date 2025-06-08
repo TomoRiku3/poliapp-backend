@@ -1,11 +1,11 @@
 // src/routes/followRequestRoutes.ts
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware } from '../../middleware/auth';
 import {
   createFollowRequestController,
   acceptFollowRequestController,
   rejectFollowRequestController
-} from '../controllers/user/followRequestController';
+} from '../../controllers/user/followRequestController';
 
 const router = Router();
 router.use(authMiddleware);

@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../../src/config/data-source';
 import { User } from '../../../src/entities/User';
-import { UserFollow } from '../../../src/entities/UserFollow';
+import { UserFollow } from '../../../src/entities/UsertoUserEntities/UserFollow';
 import { getUserFollowingController } from '../../../src/controllers/user/followController';
 
 describe('getUserFollowingController', () => {

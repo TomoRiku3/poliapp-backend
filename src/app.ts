@@ -3,7 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 import authRoutes from './routes/authRoute';
 import userRoutes from './routes/userRoute';
-import followRequestRoutes from './routes/followRequestRoute';
+import followRequestRoutes from './routes/userRoutes/followRequestRoute';
 import notificationRoutes from './routes/notificationRoute';
 import { errorHandler } from './middleware/errorHandler';
 
