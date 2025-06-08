@@ -3,7 +3,8 @@ import 'dotenv/config';
 import express from 'express';
 import authRoutes from './routes/authRoute';
 import userRoutes from './routes/userRoute';
-import { authMiddleware } from './middleware/auth';
+import followRequestRoutes from './routes/followRequestRoute';
+import notificationRoutes from './routes/notificationRoute';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -13,7 +14,13 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 // Protect everything under /api/users
-app.use('/api/users', authMiddleware, userRoutes);
+app.use('/api/users', userRoutes);
+
+// Follow request flows
+app.use('/api/follow-requests', followRequestRoutes);
+
+// Notifications
+app.use('/api/notifications', notificationRoutes);
 
 // Health‐check or home
 // @ts-ignore
