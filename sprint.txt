@@ -1,0 +1,22 @@
+TEMPLATE
+
+FEATURE: 
+STARTED:
+ENDED: 
+BRANCH:
+WHO:
+DESCRIPTION:
+__________________________________________________________________
+
+FEATURE: post entity
+STARTED: 06-08
+ENDED: 
+BRANCH: 
+WHO: Tomo
+DESCRIPTION: 
+    1. created post entity
+    2. created media entity that maps each post to the URLs of its
+    photos and videos
+    3. set up a controller to retrieve photos and videos from AWS 
+    object storage
+__________________________________________________________________

@@ -1,4 +1,4 @@
-// src/entities/User.ts 
+// src/entities/User.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,6 +11,7 @@ import { UserFollow } from './UsertoUserEntities/UserFollow';
 import { FollowRequest } from './UsertoUserEntities/FollowRequest';
 import { Notification } from './Notification';
 import { UserBlock } from './UsertoUserEntities/UserBlock';
+import { Post } from './Post';  // ← import the Post entity
 
 @Entity('users')
 export class User {
@@ -57,4 +58,8 @@ export class User {
   // users who have blocked me
   @OneToMany(() => UserBlock, ub => ub.blocked)
   blockedBy!: UserBlock[];
+
+  // ← add this:
+  @OneToMany(() => Post, post => post.author)
+  posts!: Post[];
 }

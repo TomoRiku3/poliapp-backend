@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoute';
 import userRoutes from './routes/userRoute';
 import followRequestRoutes from './routes/userRoutes/followRequestRoute';
 import notificationRoutes from './routes/notificationRoute';
+import postRoutes from './routes/postRoute';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -21,6 +22,9 @@ app.use('/api/follow-requests', followRequestRoutes);
 
 // Notifications
 app.use('/api/notifications', notificationRoutes);
+
+// Posts
+app.use('/api/posts', postRoutes);
 
 // Health‐check or home
 // @ts-ignore
