@@ -1,7 +1,7 @@
 // test/unittests/controllers/postController.test.ts
 
 // 1) Fake repos
-const mockPostRepo = { create: jest.fn(), save: jest.fn(), findOne: jest.fn() };
+const mockPostRepo = { create: jest.fn(), save: jest.fn(), findOne: jest.fn(), findAndCount: jest.fn() };
 const mockMediaRepo = { create: jest.fn(), save: jest.fn() };
 
 // 2) Fake storage service
@@ -26,7 +26,12 @@ jest.mock('../../../../src/services/storage', () => ({
 }));
 
 import { Request, Response, NextFunction } from 'express';
-import { createPostController, getPostController } from '../../../../src/controllers/post/postController';
+import { 
+  createPostController, 
+  getPostController,
+  replyToPostController,
+  getRepliesController 
+} from '../../../../src/controllers/post/postController';
 
 // Helpers
 function makeRes() {
@@ -187,6 +192,132 @@ describe('getPostController', () => {
 
     await getPostController(req, res, next);
 
+    expect(next).toHaveBeenCalledWith(err);
+  });
+});
+
+// Tests for replyToPostController
+describe('replyToPostController', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // let create return its input
+    mockPostRepo.create.mockImplementation((e: any) => e);
+  });
+
+  it('responds 400 on invalid parent id', async () => {
+    const req = { params: { id: 'foo' }, body: { text: 'hi' } } as any as Request;
+    (req as any).userId = 1;
+    const res = makeRes();
+    const next = makeNext();
+
+    await replyToPostController(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid post id' });
+  });
+
+  it('responds 404 when parent not found', async () => {
+    mockPostRepo.findOne.mockResolvedValue(null);
+    const req = { params: { id: '5' }, body: { text: 'reply' } } as any as Request;
+    (req as any).userId = 2;
+    const res = makeRes();
+    const next = makeNext();
+
+    await replyToPostController(req, res, next);
+    expect(mockPostRepo.findOne).toHaveBeenCalledWith({ where: { id: 5 } });
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Parent post not found' });
+  });
+
+  it('creates a reply and returns 201', async () => {
+    // Arrange: parent exists
+    mockPostRepo.findOne.mockResolvedValue({ id: 10 });
+    mockPostRepo.save.mockResolvedValue({ id: 99 });
+
+    const req = { params: { id: '10' }, body: { text: 'a reply' } } as any as Request;
+    (req as any).userId = 3;
+    const res = makeRes();
+    const next = makeNext();
+
+    // Act
+    await replyToPostController(req, res, next);
+
+    // Assert create with parent relation
+    expect(mockPostRepo.create).toHaveBeenCalledWith({
+      author: { id: 3 },
+      text: 'a reply',
+      parent: { id: 10 }
+    });
+    expect(mockPostRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ parent: { id: 10 }, text: 'a reply' })
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ postId: 99 });
+  });
+
+  it('forwards errors to next()', async () => {
+    const err = new Error('DB error');
+    mockPostRepo.findOne.mockResolvedValue({ id: 1 });
+    mockPostRepo.save.mockRejectedValue(err);
+
+    const req = { params: { id: '1' }, body: { text: 'oops' } } as any as Request;
+    (req as any).userId = 4;
+    const res = makeRes();
+    const next = makeNext();
+
+    await replyToPostController(req, res, next);
+    expect(next).toHaveBeenCalledWith(err);
+  });
+});
+
+// Tests for getRepliesController
+describe('getRepliesController', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('responds 400 on invalid post id', async () => {
+    const req = { params: { id: 'bar' }, query: {} } as any as Request;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getRepliesController(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid post id' });
+  });
+
+  it('returns paged replies on success', async () => {
+    const fakeReplies = [{ id: 1 }, { id: 2 }];
+    const totalCount = 10;
+    mockPostRepo.findAndCount.mockResolvedValue([fakeReplies, totalCount]);
+
+    const req = { params: { id: '7' }, query: { page: '2', limit: '5' } } as any as Request;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getRepliesController(req, res, next);
+
+    expect(mockPostRepo.findAndCount).toHaveBeenCalledWith({
+      where: { parent: { id: 7 } },
+      relations: ['author','media'],
+      order: { createdAt: 'ASC' },
+      skip: (2 - 1) * 5,
+      take: 5
+    });
+    expect(res.json).toHaveBeenCalledWith({
+      page: 2,
+      limit: 5,
+      total: totalCount,
+      replies: fakeReplies
+    });
+  });
+
+  it('forwards errors to next()', async () => {
+    const err = new Error('Fetch error');
+    mockPostRepo.findAndCount.mockRejectedValue(err);
+
+    const req = { params: { id: '3' }, query: {} } as any as Request;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getRepliesController(req, res, next);
     expect(next).toHaveBeenCalledWith(err);
   });
 });
