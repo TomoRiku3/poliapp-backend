@@ -8,18 +8,6 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: upgrading get user 
-STARTED: 06-09
-ENDED: 
-BRANCH:
-WHO:
-BRANCH: get-user-profile
-WHO: Tomo
-DESCRIPTION:
-Get user should not only return profile information but their recent posts.
-Note that these posts needs to paginated.
-__________________________________________________________________
-
 FEATURE: authorization of user profile fetching
 STARTED:
 ENDED: 
@@ -50,4 +38,14 @@ ENDED:
 BRANCH:
 WHO:
 DESCRIPTION:
+__________________________________________________________________
+
+FEATURE: fix get user profile visiblity 
+STARTED: 06-09
+ENDED: 
+BRANCH: get-user-profile-visibility
+WHO:
+DESCRIPTION:
+Currently,
+getUserController when fetching posts of other users filters it by visibility, but this is redundant, it must filter the visibility of the PROFILE at one go.
 __________________________________________________________________

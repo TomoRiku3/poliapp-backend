@@ -54,3 +54,17 @@ authorizes the user's fetch call to get a post, get replies, or make a reply
 3. j unit test for postControllers were updated accordingly i.e. canViewPost
 calls were defaulted to true
 __________________________________________________________________
+
+FEATURE: upgrading get user 
+STARTED: 06-09
+ENDED: 
+BRANCH:
+WHO:
+BRANCH: get-user-profile
+WHO: Tomo
+DESCRIPTION:
+Get user should not only return profile information but their recent posts.
+Note that these posts needs to paginated.
+1. getUserController for both me an dother users have been updated to fetch their most recent posts. 
+2. junit tests for getUserController was updated accordingly
+__________________________________________________________________
