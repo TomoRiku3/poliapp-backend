@@ -11,7 +11,6 @@ __________________________________________________________________
 FEATURE: post entity
 STARTED: 06-08
 ENDED: 06-08
-DURATION: 2 hours
 BRANCH: post-entity
 WHO: Tomo
 DESCRIPTION: 
@@ -57,7 +56,7 @@ __________________________________________________________________
 
 FEATURE: upgrading get user 
 STARTED: 06-09
-ENDED: 
+ENDED: 06-09
 BRANCH:
 WHO:
 BRANCH: get-user-profile
@@ -67,4 +66,19 @@ Get user should not only return profile information but their recent posts.
 Note that these posts needs to paginated.
 1. getUserController for both me an dother users have been updated to fetch their most recent posts. 
 2. junit tests for getUserController was updated accordingly
+__________________________________________________________________
+
+FEATURE: fix get user profile visiblity 
+STARTED: 06-09
+ENDED: 06-09
+BRANCH: get-user-profile-visibility
+WHO: Tomo
+DESCRIPTION:
+Currently,
+getUserController when fetching posts of other users filters it by visibility, but this is redundant, it must filter the visibility of the PROFILE at one go.
+1. new src/policies/userProfilePolicy.ts for profile visibility logic
+exports canViewUserProfile
+2. canViewUserProfile used as a middleware in getUserController instead of canViewPost
+3. unittest for getUserController updated accordingly
+4. new middleware unittested
 __________________________________________________________________

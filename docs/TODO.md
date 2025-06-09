@@ -8,14 +8,6 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: authorization of user profile fetching
-STARTED:
-ENDED: 
-BRANCH:
-WHO:
-DESCRIPTION:
-__________________________________________________________________
-
 FEATURE: liking posts
 STARTED:
 ENDED: 
@@ -40,12 +32,11 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: fix get user profile visiblity 
-STARTED: 06-09
+FEATURE: searching algorithm
+STARTED:
 ENDED: 
-BRANCH: get-user-profile-visibility
+BRANCH:
 WHO:
 DESCRIPTION:
-Currently,
-getUserController when fetching posts of other users filters it by visibility, but this is redundant, it must filter the visibility of the PROFILE at one go.
 __________________________________________________________________
+
