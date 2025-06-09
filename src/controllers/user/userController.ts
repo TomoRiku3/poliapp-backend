@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../config/data-source';
 import { User } from '../../entities/User';
 import { Post } from '../../entities/Post';
+import { canViewPost } from '../../policies/postPolicy';
 
 // api/user/me
 export async function getMeController(
@@ -48,7 +49,7 @@ export async function getUserByIdController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const viewerId = (req as any).userId as number;
+    const viewerId = req.userId as number;
     const targetId = Number(req.params.id);
     const page     = Math.max(1, Number(req.query.page) || 1);
     const limit    = Math.max(1, Number(req.query.limit) || 10);
@@ -78,7 +79,16 @@ export async function getUserByIdController(
       take: limit
     });
 
-    res.json({ id, username, email, createdAt, updatedAt, page, limit, total, posts });
+
+    // Filter by permission
+    const visible: Post[] = [];
+    for (const reply of posts) {
+      if (await canViewPost(viewerId, reply.id)) {
+          visible.push(reply);
+      }
+    }
+
+    res.json({ id, username, email, createdAt, updatedAt, page, limit, total, visible});
   } catch (err) {
     next(err);
   }
