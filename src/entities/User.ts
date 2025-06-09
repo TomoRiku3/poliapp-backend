@@ -11,7 +11,8 @@ import { UserFollow } from './UsertoUserEntities/UserFollow';
 import { FollowRequest } from './UsertoUserEntities/FollowRequest';
 import { Notification } from './Notification';
 import { UserBlock } from './UsertoUserEntities/UserBlock';
-import { Post } from './Post';  // ← import the Post entity
+import { Post } from './Post';  
+import { Like } from './UsertoPostEntities/LikePost'; 
 
 @Entity('users')
 export class User {
@@ -62,4 +63,8 @@ export class User {
   // ← add this:
   @OneToMany(() => Post, post => post.author)
   posts!: Post[];
+
+  // in User.ts
+  @OneToMany(() => Like, like => like.user)
+  likes!: Like[];
 }

@@ -10,6 +10,11 @@ import {
     getRepliesController
 } from '../controllers/post/postController';
 
+import { 
+    likePostController, 
+    getPostLikesController 
+} from '../controllers/post/likePostController';
+
 const router = express.Router();
 const upload = multer(); // memory storage for buffer upload
 
@@ -26,5 +31,10 @@ router.get('/:id', getPostController);
 // /api/posts/:id/replies
 router.post('/:id/replies', replyToPostController);
 router.get( '/:id/replies', getRepliesController);
+
+
+// /api/posts/:id/like
+router.post('/:id/like', likePostController);
+router.get('/:id/likes', getPostLikesController);
 
 export default router;
