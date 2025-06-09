@@ -1,9 +1,9 @@
-// src/controllers/postController.ts
+// src/controllers/user/userController.ts
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../config/data-source';
 import { User } from '../../entities/User';
 import { Post } from '../../entities/Post';
-import { canViewPost } from '../../policies/postPolicy';
+import { canViewUserProfile } from '../../policies/userProfilePolicy';
 
 // api/user/me
 export async function getMeController(
@@ -12,21 +12,27 @@ export async function getMeController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const userId = (req as any).userId as number;
-    const page   = Math.max(1, Number(req.query.page) || 1);
-    const limit  = Math.max(1, Number(req.query.limit) || 10);
+    const viewerId = req.userId as number;
+
+    // Self‐view authorization
+    if (!(await canViewUserProfile(viewerId, viewerId))) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const page  = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 10);
 
     const userRepo = AppDataSource.getRepository(User);
-    const user = await userRepo.findOne({ where: { id: userId } });
+    const user     = await userRepo.findOne({ where: { id: viewerId } });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    // strip out sensitive fields
     const { id, username, email, createdAt, updatedAt } = user;
 
-    // fetch recent posts by this user
+    // Paginated posts
     const postRepo = AppDataSource.getRepository(Post);
     const [posts, total] = await postRepo.findAndCount({
       where: { author: { id } },
@@ -59,17 +65,22 @@ export async function getUserByIdController(
       return;
     }
 
+    // Profile‐level authorization
+    if (!(await canViewUserProfile(viewerId, targetId))) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const userRepo = AppDataSource.getRepository(User);
-    const user = await userRepo.findOne({ where: { id: targetId } });
+    const user     = await userRepo.findOne({ where: { id: targetId } });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    // strip sensitive fields
     const { id, username, email, createdAt, updatedAt } = user;
 
-    // fetch recent posts by this user
+    // Paginated posts
     const postRepo = AppDataSource.getRepository(Post);
     const [posts, total] = await postRepo.findAndCount({
       where: { author: { id } },
@@ -79,16 +90,7 @@ export async function getUserByIdController(
       take: limit
     });
 
-
-    // Filter by permission
-    const visible: Post[] = [];
-    for (const reply of posts) {
-      if (await canViewPost(viewerId, reply.id)) {
-          visible.push(reply);
-      }
-    }
-
-    res.json({ id, username, email, createdAt, updatedAt, page, limit, total, visible});
+    res.json({ id, username, email, createdAt, updatedAt, page, limit, total, posts });
   } catch (err) {
     next(err);
   }

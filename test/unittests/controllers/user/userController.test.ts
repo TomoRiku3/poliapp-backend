@@ -1,20 +1,19 @@
 // src/controllers/postController.ts
 // test/unittests/controllers/userController.test.ts
 
-// 1) Mock canViewPost policy
-jest.mock('../../../../src/policies/postPolicy', () => ({
-  canViewPost: jest.fn()
+// 1) Mock canViewUserProfile policy
+jest.mock('../../../../src/policies/userProfilePolicy', () => ({
+  canViewUserProfile: jest.fn()
 }));
 
 import { Request, Response, NextFunction } from 'express';
-import { canViewPost } from '../../../../src/policies/postPolicy';
 import { AppDataSource } from '../../../../src/config/data-source';
 import {
   getMeController,
   getUserByIdController
 } from '../../../../src/controllers/user/userController';
 import { User } from '../../../../src/entities/User';
-import { Post } from '../../../../src/entities/Post';
+import { canViewUserProfile } from '../../../../src/policies/userProfilePolicy';
 
 describe('userController', () => {
   const mockUserRepo = { findOne: jest.fn() };
@@ -31,7 +30,7 @@ describe('userController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // default: allow viewing
-    (canViewPost as jest.Mock).mockResolvedValue(true);
+    (canViewUserProfile as jest.Mock).mockResolvedValue(true);
   });
 
   function makeRes() {
@@ -158,9 +157,6 @@ describe('userController', () => {
 
       const fakePosts = [ { id: 3 }, { id: 4 }, { id: 5 } ];
       mockPostRepo.findAndCount.mockResolvedValue([ fakePosts, 15 ]);
-      // simulate canViewPost filtering out post with id=4
-      (canViewPost as jest.Mock)
-        .mockImplementation((viewerId: number, postId: number) => Promise.resolve(postId !== 4));
 
       const req = { params: { id: '42' }, query: { page: '2', limit: '5' } } as any as Request;
       (req as any).userId = 100;
@@ -187,7 +183,7 @@ describe('userController', () => {
         page: 2,
         limit: 5,
         total: 15,
-        visible: [ { id: 3 }, { id: 5 } ]
+        posts: [ { id: 3 }, {id: 4}, { id: 5 } ]
       });
       expect(next).not.toHaveBeenCalled();
     });
