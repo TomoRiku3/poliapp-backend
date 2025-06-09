@@ -6,6 +6,7 @@ import { Media } from '../../entities/Media';
 import { uploadObject } from '../../services/storage';
 import { StatusCodes } from '../../constants/statusCode';
 import { User } from '../../entities/User';
+import { canViewPost } from '../../policies/postPolicy';
 
 // api/post
 export async function createPostController(
@@ -53,7 +54,15 @@ export async function getPostController(
   next: NextFunction
 ): Promise<void> {
   try {
+    const viewerId = req.userId;
     const postId = Number(req.params.id);
+
+    // 1) Check if viewer can see this post
+    if (!await canViewPost(viewerId, postId)) {
+      res.status(StatusCodes.FORBIDDEN).json({ error: 'Forbidden' });
+      return;
+    }
+
     if (Number.isNaN(postId)) {
       res.status(StatusCodes.BAD_REQUEST).json({ error: 'Invalid post id' });
       return;
@@ -81,8 +90,16 @@ export async function replyToPostController(
   req: Request, res: Response, next: NextFunction
 ) {
   try {
-    const parentId = Number(req.params.id);
+    const viewerId = req.userId;
     const authorId = (req as any).userId as number;
+
+    // 1) Check if viewer can see this post
+    if (!await canViewPost(viewerId, authorId)) {
+      res.status(StatusCodes.FORBIDDEN).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const parentId = Number(req.params.id);
     if (Number.isNaN(parentId)) {
       res.status(400).json({ error: 'Invalid post id' });
       return;
@@ -115,9 +132,11 @@ export async function getRepliesController(
   req: Request, res: Response, next: NextFunction
 ) {
   try {
+
     const postId = Number(req.params.id);
     const page   = Math.max(1, Number(req.query.page)   || 1);
     const limit  = Math.max(1, Number(req.query.limit)  || 20);
+    const viewerId = req.userId as number;
 
     if (Number.isNaN(postId)) {
       res.status(400).json({ error: 'Invalid post id' });
@@ -133,11 +152,19 @@ export async function getRepliesController(
       take: limit
     });
 
+    // Filter by permission
+    const visible: Post[] = [];
+    for (const reply of items) {
+      if (await canViewPost(viewerId, reply.id)) {
+        visible.push(reply);
+      }
+    }
+
     res.json({
       page,
       limit,
       total,
-      replies: items
+      replies: visible
     });
   } catch (err) {
     next(err);

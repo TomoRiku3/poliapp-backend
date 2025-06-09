@@ -1,6 +1,8 @@
 // src/routes/postRoutes.ts
 import express from 'express';
 import multer from 'multer';
+import { authMiddleware } from '../middleware/auth';
+
 import { 
     createPostController, 
     getPostController,
@@ -10,6 +12,9 @@ import {
 
 const router = express.Router();
 const upload = multer(); // memory storage for buffer upload
+
+// Protect *all* /api/users routes:
+router.use(authMiddleware);
 
 // Create a new post (text + optional media files[])
 // POST /api/posts
