@@ -8,10 +8,18 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: All post fetching logic needs to be authorized.
-STARTED: 06-09
+FEATURE: liking/disliking post
+STARTED:
 ENDED: 
-BRANCH: post-fetch-authorization
-WHO: Tomo
+BRANCH:
+WHO:
+DESCRIPTION:
+__________________________________________________________________
+
+FEATURE: 
+STARTED:
+ENDED: 
+BRANCH:
+WHO:
 DESCRIPTION:
 __________________________________________________________________

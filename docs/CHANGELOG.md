@@ -41,3 +41,14 @@ on X.
 
 __________________________________________________________________
 
+FEATURE: All post fetching logic needs to be authorized.
+STARTED: 06-09
+ENDED: 06-09
+BRANCH: post-fetch-authorization
+WHO: Tomo
+DESCRIPTION:
+1. Created src/polities/postPolicy to refactor the post visibility check logic. Exports function canViewPost.
+2. canViewPost is used as a middleware in postControllers
+3. unit tests for canViewPost are written and passes.
+4. unit tests for postControllers are modified (mocks canViewPost).
+__________________________________________________________________

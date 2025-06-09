@@ -1,7 +1,7 @@
 // src/routes/blockRoutes.ts
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth';
-import { blockUserController, unblockUserController } from '../controllers/user/blockController';
+import { authMiddleware } from '../../middleware/auth';
+import { blockUserController, unblockUserController } from '../../controllers/user/blockController';
 
 const router = Router();
 router.use(authMiddleware);
