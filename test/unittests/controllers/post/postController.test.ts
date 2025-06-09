@@ -25,6 +25,10 @@ jest.mock('../../../../src/services/storage', () => ({
   uploadObject: (...args: any[]) => mockUploadObject(...args)
 }));
 
+jest.mock('../../../../src/policies/postPolicy', () => ({
+  canViewPost: jest.fn()
+}));
+
 import { Request, Response, NextFunction } from 'express';
 import { 
   createPostController, 
@@ -32,6 +36,8 @@ import {
   replyToPostController,
   getRepliesController 
 } from '../../../../src/controllers/post/postController';
+import { canViewPost } from '../../../../src/policies/postPolicy';
+
 
 // Helpers
 function makeRes() {
@@ -131,7 +137,11 @@ describe('createPostController', () => {
 
 // Tests for getPostController
 describe('getPostController', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // by default, allow viewing
+    (canViewPost as jest.Mock).mockResolvedValue(true);
+  });
 
   it('should return 400 on non-numeric id', async () => {
     const req = { params: { id: 'abc' } } as any as Request;
@@ -202,6 +212,8 @@ describe('replyToPostController', () => {
     jest.clearAllMocks();
     // let create return its input
     mockPostRepo.create.mockImplementation((e: any) => e);
+    (canViewPost as jest.Mock).mockResolvedValue(true);
+
   });
 
   it('responds 400 on invalid parent id', async () => {
@@ -271,7 +283,11 @@ describe('replyToPostController', () => {
 
 // Tests for getRepliesController
 describe('getRepliesController', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // by default, allow viewing
+    (canViewPost as jest.Mock).mockResolvedValue(true);
+  });
 
   it('responds 400 on invalid post id', async () => {
     const req = { params: { id: 'bar' }, query: {} } as any as Request;

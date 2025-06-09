@@ -24,7 +24,7 @@ export function authMiddleware(
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
     // 3) Attach userId to the request object
-    ;(req as any).userId = payload.userId; 
+    req.userId = payload.userId; 
 
     // 4) Call next to move on to the controller
     next();
