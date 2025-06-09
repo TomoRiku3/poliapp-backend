@@ -8,13 +8,10 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: recursive replies on posts
-STARTED: 06-08
+FEATURE: All post fetching logic needs to be authorized.
+STARTED: 06-09
 ENDED: 
-BRANCH: post-replies
+BRANCH: post-fetch-authorization
 WHO: Tomo
 DESCRIPTION:
-Intuitvely, users can now reply to a post with a post, like a retweet 
-on X.
-
 __________________________________________________________________

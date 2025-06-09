@@ -25,4 +25,19 @@ DESCRIPTION:
     6. objects storage via AWS is only mocked for now
 __________________________________________________________________
 
+FEATURE: recursive replies on posts
+STARTED: 06-08
+ENDED: 06-09
+BRANCH: post-replies
+WHO: Tomo
+DESCRIPTION:
+Intuitvely, users can now reply to a post with a post, like a retweet 
+on X.
+
+    1. post-entity have two new columns, one that keeps its replies, 
+    and a parent column i.e. posts now have parent, child relationship
+    2. controller that fetches replies of a post have a page and limit 
+    logic
+
+__________________________________________________________________
 
