@@ -18,3 +18,11 @@ Intuitvely, users can now reply to a post with a post, like a retweet
 on X.
 
 __________________________________________________________________
+
+FEATURE: If user A blocked user B, user B can not fetch user A's posts.
+STARTED:
+ENDED: 
+BRANCH:
+WHO:
+DESCRIPTION:
+__________________________________________________________________
