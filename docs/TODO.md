@@ -9,10 +9,10 @@ DESCRIPTION:
 __________________________________________________________________
 
 FEATURE: liking posts
-STARTED:
+STARTED: 06-09
 ENDED: 
-BRANCH:
-WHO:
+BRANCH: like-post
+WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________
 
