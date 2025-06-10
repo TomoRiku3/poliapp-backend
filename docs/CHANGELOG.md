@@ -1,11 +1,3 @@
-TEMPLATE
-
-FEATURE: 
-STARTED:
-ENDED: 
-BRANCH:
-WHO:
-DESCRIPTION:
 __________________________________________________________________
 
 FEATURE: post entity
@@ -14,14 +6,14 @@ ENDED: 06-08
 BRANCH: post-entity
 WHO: Tomo
 DESCRIPTION: 
-    1. created post entity
-    2. created media entity that maps each post to the URLs of its
-    photos and videos
-    3. created controller for posts
-    4. created controllers for get. note that client side only recieves 
-    the URL to the object storage and they need to retrieve themselves
-    5. both controllers are unittested
-    6. objects storage via AWS is only mocked for now
+1. created post entity
+2. created media entity that maps each post to the URLs of its
+photos and videos
+3. created controller for posts
+4. created controllers for get. note that client side only recieves 
+the URL to the object storage and they need to retrieve themselves
+5. both controllers are unittested
+6. objects storage via AWS is only mocked for now
 __________________________________________________________________
 
 FEATURE: recursive replies on posts
@@ -33,9 +25,9 @@ DESCRIPTION:
 Intuitvely, users can now reply to a post with a post, like a retweet 
 on X.
 
-    1. post-entity have two new columns, one that keeps its replies, 
+1. post-entity have two new columns, one that keeps its replies, 
     and a parent column i.e. posts now have parent, child relationship
-    2. controller that fetches replies of a post have a page and limit 
+2. controller that fetches replies of a post have a page and limit 
     logic
 
 __________________________________________________________________
@@ -81,4 +73,19 @@ exports canViewUserProfile
 2. canViewUserProfile used as a middleware in getUserController instead of canViewPost
 3. unittest for getUserController updated accordingly
 4. new middleware unittested
+__________________________________________________________________
+
+FEATURE: liking posts
+STARTED: 06-09
+ENDED: 06-09
+BRANCH: like-post
+WHO: Tomo
+DESCRIPTION:
+1. created new JOIN TABLE that maps a user to a post to record the like /src/entities/UsetoPostEntities/likePostController.ts
+2. new controller likePostController to record likes 
+3. NOTE, likePostController called on a already present like-relationship will unlike i.e. delete the relationship
+4. there is no authorization user in likePostCotroller to reduce API trafficking because
+if a post is not visible a post will not be liked unless there is a
+maliciously constructed API
+5. unittested
 __________________________________________________________________
