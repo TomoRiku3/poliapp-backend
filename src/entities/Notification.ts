@@ -11,6 +11,7 @@ import { User } from './User';
 export enum NotificationType {
   FOLLOW_REQUEST = 'follow_request',
   REQUEST_ACCEPTED = 'request_accepted',
+  POST_LIKED = 'post_liked',
 }
 
 @Entity('notifications')

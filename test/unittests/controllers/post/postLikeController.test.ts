@@ -13,6 +13,8 @@ const mockPostRepo = {
   findOne: jest.fn()
 };
 
+const mockNotifRepo = { create: jest.fn(), save: jest.fn() };
+
 // 2) Mock data-source *before* importing controllers
 jest.mock('../../../../src/config/data-source', () => ({
   AppDataSource: {
@@ -20,6 +22,7 @@ jest.mock('../../../../src/config/data-source', () => ({
       switch (entity.name) {
         case 'Like':    return mockLikeRepo;
         case 'Post':    return mockPostRepo;
+        case 'Notification': return mockNotifRepo;
         default:
           throw new Error(`Unexpected repository: ${entity.name}`);
       }
@@ -32,6 +35,7 @@ import {
   likePostController,
   getPostLikesController
 } from '../../../../src/controllers/post/likePostController';
+import { NotificationType } from '../../../../src/entities/Notification';
 
 // Helpers
 function makeRes() {
@@ -47,6 +51,7 @@ function makeNext(): NextFunction {
 describe('likePostController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNotifRepo.create.mockImplementation((obj: any) => obj);
   });
 
   it('toggles off existing like', async () => {
@@ -67,7 +72,7 @@ describe('likePostController', () => {
     expect(res.json).toHaveBeenCalledWith({ liked: false });
   });
 
-  it('toggles on new like', async () => {
+  it('toggles on new like and creates notification', async () => {
     // Arrange: no existing like
     mockLikeRepo.findOne.mockResolvedValue(null);
     const fakeLike = { user: { id: 5 }, post: { id: 10 } };
@@ -77,6 +82,8 @@ describe('likePostController', () => {
     const res = makeRes();
     const next = makeNext();
 
+    mockPostRepo.findOne.mockResolvedValue({ id: 10, author: { id: 20 } });
+
     // Act
     await likePostController(req, res, next);
 
@@ -85,6 +92,16 @@ describe('likePostController', () => {
     expect(mockLikeRepo.save).toHaveBeenCalledWith(fakeLike);
     expect(mockPostRepo.increment).toHaveBeenCalledWith({ id: 10 }, 'likeCount', 1);
     expect(res.json).toHaveBeenCalledWith({ liked: true });
+
+    // Assert notification created
+    expect(mockNotifRepo.create).toHaveBeenCalledWith({
+      user: { id: 20 },
+      type: NotificationType.POST_LIKED,
+      data: { by: 5, postId: 10 }
+    });
+    expect(mockNotifRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+      user: { id: 20 }, type: NotificationType.POST_LIKED, data: { by: 5, postId: 10 }
+    }));
   });
 
   it('forwards errors to next()', async () => {
