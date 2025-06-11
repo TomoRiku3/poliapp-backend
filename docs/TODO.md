@@ -9,10 +9,10 @@ DESCRIPTION:
 __________________________________________________________________
 
 FEATURE: fetching feeds
-STARTED:
+STARTED: 06-10
 ENDED: 
-BRANCH:
-WHO:
+BRANCH: fetch-feed
+WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________
 
@@ -29,14 +29,6 @@ STARTED:
 ENDED: 
 BRANCH:
 WHO:
-DESCRIPTION:
-__________________________________________________________________
-
-FEATURE: like authorization
-STARTED: 06-10
-ENDED: 
-BRANCH: like-authorization
-WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________
 

@@ -89,3 +89,26 @@ if a post is not visible a post will not be liked unless there is a
 maliciously constructed API
 5. unittested
 __________________________________________________________________
+
+FEATURE: notifications of likes
+STARTED: 06-09
+ENDED: 06-09
+BRANCH: like-notifications
+WHO: Tomo
+DESCRIPTION:
+1. created a new NotificationType POST_LIKED
+2. updated likePostController so that it creates a notification
+3. created a notification Controller that gets the number of unread notification with an upper bound of 100
+4. created a notification Controller that gets paginated unread notifications
+__________________________________________________________________
+
+FEATURE: like authorization
+STARTED: 06-10
+ENDED: 06-10
+BRANCH: like-authorization
+WHO: Tomo
+DESCRIPTION:
+1. in likePostController, I added a authorization logic using canView
+Post
+2. unit test for likePostController defaults canViewPost to return true
+__________________________________________________________________
