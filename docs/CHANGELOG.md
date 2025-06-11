@@ -123,3 +123,12 @@ DESCRIPTION:
 recent posts that are visible
 2. unit tested
 __________________________________________________________________
+
+FEATURE: unit test for like authorization
+STARTED: 06-10
+ENDED: 06-10
+BRANCH: unittest-like-authorization
+WHO: Tomo
+DESCRIPTION:
+1. added a test case for like authorization
+__________________________________________________________________
