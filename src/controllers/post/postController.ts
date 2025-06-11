@@ -8,6 +8,8 @@ import { StatusCodes } from '../../constants/statusCode';
 import { User } from '../../entities/User';
 import { canViewPost } from '../../policies/postPolicy';
 
+import { IsNull } from 'typeorm';
+
 // api/post
 export async function createPostController(
   req: Request,
@@ -170,4 +172,44 @@ export async function getRepliesController(
     next(err);
   }
 }
+
+
+// GET api/posts/feed
+export async function getFeedController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const viewerId = req.userId as number;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 20);
+
+    const postRepo = AppDataSource.getRepository(Post);
+    const [items, total] = await postRepo.findAndCount({
+      where: { parent: IsNull() },
+      relations: ['author', 'media'],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const visible: Post[] = [];
+    for (const post of items) {
+      if (await canViewPost(viewerId, post.id)) {
+        visible.push(post);
+      }
+    }
+
+    res.json({
+      page,
+      limit,
+      total,
+      posts: visible,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 

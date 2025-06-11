@@ -34,7 +34,8 @@ import {
   createPostController, 
   getPostController,
   replyToPostController,
-  getRepliesController 
+  getRepliesController,
+  getFeedController
 } from '../../../../src/controllers/post/postController';
 import { canViewPost } from '../../../../src/policies/postPolicy';
 
@@ -337,3 +338,77 @@ describe('getRepliesController', () => {
     expect(next).toHaveBeenCalledWith(err);
   });
 });
+
+// Tests for getFeedController
+describe('getFeedController', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (canViewPost as jest.Mock).mockResolvedValue(true);
+  });
+
+  it('returns paginated feed of visible posts', async () => {
+    const fakePosts = [
+      { id: 1, text: 'Post 1' },
+      { id: 2, text: 'Post 2' }
+    ];
+    mockPostRepo.findAndCount.mockResolvedValue([fakePosts, 12]);
+
+    const req = { query: { page: '1', limit: '2' } } as any as Request;
+    (req as any).userId = 10;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getFeedController(req, res, next);
+
+    expect(mockPostRepo.findAndCount).toHaveBeenCalledWith({
+      where: { parent: expect.any(Object) }, // Will be IsNull()
+      relations: ['author', 'media'],
+      order: { createdAt: 'DESC' },
+      skip: 0,
+      take: 2
+    });
+
+    expect(res.json).toHaveBeenCalledWith({
+      page: 1,
+      limit: 2,
+      total: 12,
+      posts: fakePosts
+    });
+  });
+
+  it('filters out posts viewer cannot see', async () => {
+    const fakePosts = [
+      { id: 1, text: 'Visible' },
+      { id: 2, text: 'Hidden' }
+    ];
+    mockPostRepo.findAndCount.mockResolvedValue([fakePosts, 2]);
+    (canViewPost as jest.Mock).mockImplementation((viewerId, postId) => postId === 1);
+
+    const req = { query: {}, userId: 50 } as any as Request;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getFeedController(req, res, next);
+
+    expect(res.json).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      total: 2,
+      posts: [{ id: 1, text: 'Visible' }]
+    });
+  });
+
+  it('forwards errors to next()', async () => {
+    const err = new Error('DB error');
+    mockPostRepo.findAndCount.mockRejectedValue(err);
+
+    const req = { query: {}, userId: 10 } as any as Request;
+    const res = makeRes();
+    const next = makeNext();
+
+    await getFeedController(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(err);
+  });
+});
+
