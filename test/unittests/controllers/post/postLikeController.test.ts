@@ -112,6 +112,23 @@ describe('likePostController', () => {
     }));
   });
 
+  it('returns 403 if viewer cannot view post (blocked or not a follower)', async () => {
+    (canViewPost as jest.Mock).mockResolvedValue(false);
+
+    const req = { params: { id: '42' } } as any as Request;
+    (req as any).userId = 99;
+    const res = makeRes();
+    const next = makeNext();
+
+    await likePostController(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' });
+    expect(mockLikeRepo.findOne).not.toHaveBeenCalled();
+    expect(mockLikeRepo.save).not.toHaveBeenCalled();
+    expect(mockNotifRepo.save).not.toHaveBeenCalled();
+  });
+
   it('forwards errors to next()', async () => {
     const error = new Error('DB error');
     mockLikeRepo.findOne.mockRejectedValue(error);

@@ -21,7 +21,7 @@ export async function likePostController(
     // 1) Check if viewer can see this post
     const canView = await canViewPost(userId, Number(req.params.id));
     if (!canView) {
-      res.status(403).json({ error: 'You cannot view this post' });
+      res.status(403).json({ error: 'Forbidden' });
       return;
     }
     
