@@ -8,13 +8,6 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: fetching feeds
-STARTED: 06-10
-ENDED: 
-BRANCH: fetch-feed
-WHO: Tomo
-DESCRIPTION:
-__________________________________________________________________
 
 FEATURE: reccomendation algorithm 
 STARTED:
@@ -45,5 +38,13 @@ STARTED:
 ENDED: 
 BRANCH:
 WHO:
+DESCRIPTION:
+__________________________________________________________________
+
+FEATURE: unit test for like authorization
+STARTED: 06-10
+ENDED: 
+BRANCH: unittest-like-authorization
+WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________

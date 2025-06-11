@@ -112,3 +112,14 @@ DESCRIPTION:
 Post
 2. unit test for likePostController defaults canViewPost to return true
 __________________________________________________________________
+
+FEATURE: fetching feeds
+STARTED: 06-10
+ENDED: 06-10
+BRANCH: fetch-feed
+WHO: Tomo
+DESCRIPTION:
+1. created a new controller getFeedController that fetches paginated 
+recent posts that are visible
+2. unit tested
+__________________________________________________________________
