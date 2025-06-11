@@ -36,6 +36,12 @@ import {
   getPostLikesController
 } from '../../../../src/controllers/post/likePostController';
 import { NotificationType } from '../../../../src/entities/Notification';
+import { canViewPost } from '../../../../src/policies/postPolicy';
+
+// Mock the canViewPost policy
+jest.mock('../../../../src/policies/postPolicy', () => ({
+  canViewPost: jest.fn()
+}));
 
 // Helpers
 function makeRes() {
@@ -52,6 +58,8 @@ describe('likePostController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockNotifRepo.create.mockImplementation((obj: any) => obj);
+    // default canViewPost to true
+    (canViewPost as jest.Mock).mockResolvedValue(true);
   });
 
   it('toggles off existing like', async () => {

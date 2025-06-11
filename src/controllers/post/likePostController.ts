@@ -6,6 +6,7 @@ import { Like } from '../../entities/UsertoPostEntities/LikePost';
 import { Post } from '../../entities/Post';
 import { User } from '../../entities/User';
 import { Notification, NotificationType } from '../../entities/Notification';
+import { canViewPost } from '../../policies/postPolicy';
 
 
 // POST /api/posts/:id/like
@@ -16,6 +17,14 @@ export async function likePostController(
 ): Promise<void> {
   try {
     const userId = req.userId as number;
+
+    // 1) Check if viewer can see this post
+    const canView = await canViewPost(userId, Number(req.params.id));
+    if (!canView) {
+      res.status(403).json({ error: 'You cannot view this post' });
+      return;
+    }
+    
     const postId = Number(req.params.id);
 
     if (Number.isNaN(postId)) {
