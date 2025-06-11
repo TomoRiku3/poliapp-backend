@@ -41,10 +41,3 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: unit test for like authorization
-STARTED: 06-10
-ENDED: 
-BRANCH: unittest-like-authorization
-WHO: Tomo
-DESCRIPTION:
-__________________________________________________________________

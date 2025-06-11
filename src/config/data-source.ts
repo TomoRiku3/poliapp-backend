@@ -2,6 +2,14 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from '../entities/User';
+import { Post } from '../entities/Post';
+import { Media } from '../entities/Media';
+import { Notification } from '../entities/Notification';
+import { Like } from '../entities/UsertoPostEntities/LikePost';
+import { UserFollow } from '../entities/UsertoUserEntities/UserFollow';
+import { FollowRequest } from '../entities/UsertoUserEntities/FollowRequest';
+import { UserBlock } from '../entities/UsertoUserEntities/UserBlock';
+
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -12,7 +20,8 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'poliapp_dev',
   synchronize: false,          // never use `synchronize: true` in production
   logging: false,
-  entities: [User],
+  entities: [User, Post, Media, Notification, Like,
+    UserFollow, FollowRequest, UserBlock],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
 });
