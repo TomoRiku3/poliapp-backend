@@ -176,9 +176,36 @@ __________________________________________________________________
 
 CODE ORGANIZATION: refactoring authentication logic from integration tests
 STARTED: 06-12
-ENDED: 
+ENDED: 06-12
 BRANCH: refactor-int-test
 WHO: Tomo
 DESCRIPTION:
 1. refactored registering and log in i.e. cookie retrieval logic in test/util/auth.ts
+__________________________________________________________________
+
+FEATURE: Cross Site Request Forgery (CSRF) token
+STARTED: 06-12
+ENDED: 06-12
+BRANCH: csrf-token
+WHO: Tomo
+DESCRIPTION:
+1. created a csrf middleware csrf.ts
+2. mounted csrf on app.ts
+3. updated auth.ts (refactored auth/autho logic for IT) to handle CSRF as well
+4. updated authMiddleware.test.ts
+5. added csrfFlow.test.ts i.e. int test purely for csrf logic
+6. unit tested the middleware
+
+WHAT I LEARNT:
+1. What is CSRF 
+Let A be our official site. A user is lured to a malicious site B that makes
+an API call via A to which the browser WILL add a cookie. 
+2. What is a CSRF token
+Browser interface that can not be discovered nor accessed from other sites.
+3. Defense against CSRF
+double authentication using cookies and csrf prevents CSRF attacks because site B can not access the csrf token
+4. Note that the DB does need store sessional csrf tokens
+5. secure: process.env.NODE_ENV === 'production' as a configuration for the csrf token means only flag secure with TRUE (which limits transfer of csrf token over HTTPS) during production and allow it to be transfered anywhere 
+during development which comes in handy during int tests
+
 __________________________________________________________________
