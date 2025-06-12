@@ -173,3 +173,12 @@ WHAT I LEARNT:
 3. NOTE, httponly: true is only capable and responsible for the access of web-page codes on cookies and nothing else
 
 __________________________________________________________________
+
+CODE ORGANIZATION: refactoring authentication logic from integration tests
+STARTED: 06-12
+ENDED: 
+BRANCH: refactor-int-test
+WHO: Tomo
+DESCRIPTION:
+1. refactored registering and log in i.e. cookie retrieval logic in test/util/auth.ts
+__________________________________________________________________

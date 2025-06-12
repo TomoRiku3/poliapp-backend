@@ -32,14 +32,6 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-CODE ORGANIZATION: refactoring authentication logic from integration tests
-STARTED: 06-12
-ENDED: 
-BRANCH: refactor-int-test
-WHO: Tomo
-DESCRIPTION:
-__________________________________________________________________
-
 FEATURE: Cross Site Request Forgery (CSRF) token
 STARTED: 06-12
 ENDED: 
