@@ -33,10 +33,10 @@ DESCRIPTION:
 __________________________________________________________________
 
 FEATURE: middleware authorization needs to look at cookies instead of the body of the request
-STARTED:
+STARTED: 06-12
 ENDED: 
-BRANCH:
-WHO:
+BRANCH: middleware-cookie
+WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________
 
