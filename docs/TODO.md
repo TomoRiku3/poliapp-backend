@@ -32,11 +32,19 @@ WHO:
 DESCRIPTION:
 __________________________________________________________________
 
-FEATURE: middleware authorization needs to look at cookies instead of the body of the request
+CODE ORGANIZATION: refactoring authentication logic from integration tests
 STARTED: 06-12
 ENDED: 
-BRANCH: middleware-cookie
+BRANCH: refactor-int-test
 WHO: Tomo
 DESCRIPTION:
 __________________________________________________________________
 
+FEATURE: Cross Site Request Forgery (CSRF) token
+STARTED: 06-12
+ENDED: 
+BRANCH: csrf-token
+WHO: Tomo
+DESCRIPTION:
+WHAT I LEARNT:
+__________________________________________________________________

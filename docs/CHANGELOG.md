@@ -157,3 +157,19 @@ DESCRIPTION:
 3. two initial light integration test files passed
 
 __________________________________________________________________
+
+FEATURE: middleware authorization needs to look at cookies instead of the body of the request
+STARTED: 06-12
+ENDED: 06-12
+BRANCH: middleware-cookie
+WHO: Tomo
+DESCRIPTION:
+1. modified auth.ts, registerController, loginController, to use cookies instead of body of the req
+2. COOKIE OPTIONS sets httponly: true
+3. updated INT tests and unit tests involving the controllers above 
+WHAT I LEARNT:
+1. browsers run the JS (http, css, JS) in a sandbox and its I/O layer, netwroklayer in different process/threads so that they are segregated
+2. cookies with httponly: true can not be read or overwritten from web-page code
+3. NOTE, httponly: true is only capable and responsible for the access of web-page codes on cookies and nothing else
+
+__________________________________________________________________

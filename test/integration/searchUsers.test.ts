@@ -1,41 +1,16 @@
 import request from 'supertest';
 import app from '../../src/app';
+import { getAuthCookies } from '../utils/auth';
 
 describe('GET /api/users/search (full integration, cookie-based)', () => {
   let cookies: string[];
 
   beforeAll(async () => {
-    // 1) Register two users
-    await request(app)
-      .post('/api/auth/register')
-      .send({
-        username: 'emily',
-        email: 'emily@example.com',
-        password: 'plain_pw'
-      })
-      .expect(201);
-
-    await request(app)
-      .post('/api/auth/register')
-      .send({
-        username: 'emilio',
-        email: 'emilio@example.com',
-        password: 'plain_pw'
-      })
-      .expect(201);
-
-    // 2) Log in and grab cookies
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'emily@example.com',
-        password: 'plain_pw'
-      })
-      .expect(200);
-
-    // @ts-ignore
-    cookies = loginRes.headers['set-cookie'];
-    expect(cookies).toBeDefined();
+    cookies = await getAuthCookies(
+      'emily',
+      'emily@example.com',
+      'plain_pw'
+    );
   });
 
   it('returns usernames similar to query', async () => {
