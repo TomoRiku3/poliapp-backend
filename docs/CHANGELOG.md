@@ -132,3 +132,28 @@ WHO: Tomo
 DESCRIPTION:
 1. added a test case for like authorization
 __________________________________________________________________
+
+FEATURE: searching algorithm
+STARTED: 06-10
+ENDED: 06-12
+BRANCH: main (accident)
+WHO: Tomo
+DESCRIPTION:
+1. search algorithm is trigram similarity
+2. migration file <TIMESTAMP>-AddTrigramIndexToUser.ts runs the migration
+3. new controller searchUsersController.ts 
+4. controller is unittested
+__________________________________________________________________
+
+
+FEATURE: setting up integration tests
+STARTED: 06-10
+ENDED: 06-12
+BRANCH: main (accident)
+WHO: Tomo
+DESCRIPTION:
+1. test/integration for integration test files
+2. test/setup for the set up
+3. two initial light integration test files passed
+
+__________________________________________________________________
