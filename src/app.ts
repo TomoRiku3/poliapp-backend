@@ -2,7 +2,7 @@
 import 'dotenv/config';
 import express from 'express';
 import authRoutes from './routes/authRoute';
-import userRoutes from './routes/userRoute';
+import userRoutes from './routes/userRoutes';
 import followRequestRoutes from './routes/userRoutes/followRequestRoute';
 import notificationRoutes from './routes/notificationRoute';
 import postRoutes from './routes/postRoute';

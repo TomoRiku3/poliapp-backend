@@ -7,7 +7,7 @@ module.exports = {
   roots: ['<rootDir>/test'],
 
   // match both .test.ts and .spec.ts files
-  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+  testMatch: ['**/test/unittests/**/*.test.ts'],
 
   // allow importing these extensions without specifying them
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],

@@ -1,4 +1,4 @@
-// GET /api/users/search?query=tomo&page=1&limit=10
+// GET /api/users/search?query=&page=1&limit=10
 
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../config/data-source';
