@@ -1,16 +1,16 @@
 import request from 'supertest';
 import app from '../../src/app';
 
-describe('Auth middleware protection', () => {
+describe('Auth middleware protection (cookie-based)', () => {
   it('rejects unauthenticated requests with 401', async () => {
     await request(app)
       .get('/api/users/me')
       .expect(401);
   });
 
-  it('allows authenticated requests to proceed with Bearer token', async () => {
-    // 1) Register a new user
-    await request(app)
+  it('allows authenticated requests to proceed with cookies', async () => {
+    // 1) Register a new user (sets cookie)
+    const registerRes = await request(app)
       .post('/api/auth/register')
       .send({
         username: 'authTester',
@@ -19,7 +19,7 @@ describe('Auth middleware protection', () => {
       })
       .expect(201);
 
-    // 2) Log in and grab the token
+    // 2) Log in and grab fresh cookie
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({
@@ -28,13 +28,13 @@ describe('Auth middleware protection', () => {
       })
       .expect(200);
 
-    const token = loginRes.body.token;
-    expect(token).toBeDefined();
+    const cookies = loginRes.headers['set-cookie'];
+    expect(cookies).toBeDefined();
 
-    // 3) Call protected route with that Bearer token
+    // 3) Call protected route with that cookie
     const res = await request(app)
       .get('/api/users/me')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Cookie', cookies)
       .expect(200);
 
     expect(res.body).toHaveProperty('id');

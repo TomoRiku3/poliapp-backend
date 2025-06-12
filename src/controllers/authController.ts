@@ -8,6 +8,12 @@ import { User } from '../entities/User';
 const userRepo = AppDataSource.getRepository(User);
 const JWT_SECRET = process.env.JWT_SECRET!;
 const SALT_ROUNDS = 10;
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+};
 
 export async function registerController(
   req: Request,
@@ -30,17 +36,18 @@ export async function registerController(
     }
 
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = userRepo.create({
-      username,
-      email,
-      passwordHash: hash,
-    });
+    const user = userRepo.create({ username, email, passwordHash: hash });
     await userRepo.save(user);
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: '7d',
     });
-    res.status(201).json({ token, user: { id: user.id, username, email } });
+
+    // <-- set the cookie here
+    res
+      .status(201)
+      .cookie('token', token, COOKIE_OPTIONS)
+      .json({ user: { id: user.id, username, email } });
   } catch (err) {
     next(err);
   }
@@ -73,10 +80,11 @@ export async function loginController(
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: '7d',
     });
-    res.json({
-      token,
-      user: { id: user.id, username: user.username, email: user.email },
-    });
+
+    // <-- set the cookie here
+    res
+      .cookie('token', token, COOKIE_OPTIONS)
+      .json({ user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
     next(err);
   }

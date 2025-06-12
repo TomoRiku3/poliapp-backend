@@ -1,3 +1,4 @@
+// src/controllers/authController.test.ts
 // 1) Create your fake repo up front
 const mockUserRepo = {
   findOne: jest.fn(),
@@ -13,25 +14,22 @@ jest.mock('../../../../src/config/data-source', () => ({
   }
 }));
 
-// src/controllers/authController.test.ts
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { AppDataSource } from '../../../../src/config/data-source';
 import { registerController, loginController } from '../../../../src/controllers/authController';
 import { User } from '../../../../src/entities/User';
 
-describe('authController', () => {
+describe('authController (cookie-based)', () => {
   beforeAll(() => {
-    // @ts-ignore: we know this returns a Promise<string> in our code
     // stub bcrypt & jwt
+    // @ts-ignore
     jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
     jest.spyOn(bcrypt, 'compare').mockImplementation((pwd, hash) =>
       Promise.resolve(pwd === 'correctPassword')
     );
-    // @ts-ignore: we know this returns a Promise<string> in our code
+    // @ts-ignore
     jest.spyOn(jwt, 'sign').mockReturnValue('signedToken');
-    
   });
 
   beforeEach(() => {
@@ -42,6 +40,7 @@ describe('authController', () => {
     const res: Partial<Response> = {};
     res.status = jest.fn().mockReturnValue(res as Response);
     res.json   = jest.fn().mockReturnValue(res as Response);
+    res.cookie = jest.fn().mockReturnValue(res as Response);
     return res as Response;
   }
 
@@ -56,8 +55,10 @@ describe('authController', () => {
       const next = makeNext();
 
       await registerController(req, res, next);
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: 'Missing fields' });
+      expect(res.cookie).not.toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -69,11 +70,13 @@ describe('authController', () => {
       const next = makeNext();
 
       await registerController(req, res, next);
+
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith({ error: 'User already exists' });
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
-    it('creates user, hashes password, returns token & user', async () => {
+    it('creates user, hashes password, sets cookie & returns user', async () => {
       mockUserRepo.findOne.mockResolvedValue(null);
       mockUserRepo.create.mockReturnValue({ id: 42, username: 'u', email: 'e', passwordHash: 'h' });
       mockUserRepo.save.mockResolvedValue({ id: 42, username: 'u', email: 'e' });
@@ -91,11 +94,26 @@ describe('authController', () => {
         passwordHash: 'hashedPassword',
       });
       expect(mockUserRepo.save).toHaveBeenCalled();
-      expect(jwt.sign).toHaveBeenCalledWith({ userId: 42 }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { userId: 42 },
+        process.env.JWT_SECRET!,
+        { expiresIn: '7d' }
+      );
+
       expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.cookie).toHaveBeenCalledWith(
+        'token',
+        'signedToken',
+        expect.objectContaining({
+          httpOnly: true,
+          secure: expect.any(Boolean),
+          sameSite: 'lax',
+          maxAge: expect.any(Number),
+        })
+      );
       expect(res.json).toHaveBeenCalledWith({
-        token: 'signedToken',
-        user: { id: 42, username: 'u', email: 'e' },
+        user: { id: 42, username: 'u', email: 'e' }
       });
     });
 
@@ -118,8 +136,10 @@ describe('authController', () => {
       const next = makeNext();
 
       await loginController(req, res, next);
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: 'Missing fields' });
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
     it('returns 401 if user not found', async () => {
@@ -130,25 +150,28 @@ describe('authController', () => {
       const next = makeNext();
 
       await loginController(req, res, next);
+
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ error: 'Invalid credentials' });
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
     it('returns 401 if password invalid', async () => {
       mockUserRepo.findOne.mockResolvedValue({ id: 1, username: 'u', email: 'e', passwordHash: 'h' } as User);
-      // bcrypt.compare will return false for any password !== 'correctPassword'
+
       const req = { body: { email: 'e', password: 'wrong' } } as Request;
       const res = makeRes();
       const next = makeNext();
 
       await loginController(req, res, next);
+
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ error: 'Invalid credentials' });
+      expect(res.cookie).not.toHaveBeenCalled();
     });
 
-    it('returns token & user on successful login', async () => {
+    it('sets cookie & returns user on successful login', async () => {
       mockUserRepo.findOne.mockResolvedValue({ id: 7, username: 'u7', email: 'e7', passwordHash: 'h' } as User);
-      // simulate correct password
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const req = { body: { email: 'e7', password: 'correctPassword' } } as Request;
@@ -156,11 +179,25 @@ describe('authController', () => {
       const next = makeNext();
 
       await loginController(req, res, next);
+
       expect(bcrypt.compare).toHaveBeenCalledWith('correctPassword', 'h');
-      expect(jwt.sign).toHaveBeenCalledWith({ userId: 7 }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+      expect(jwt.sign).toHaveBeenCalledWith(
+        { userId: 7 },
+        process.env.JWT_SECRET!,
+        { expiresIn: '7d' }
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'token',
+        'signedToken',
+        expect.objectContaining({
+          httpOnly: true,
+          secure: expect.any(Boolean),
+          sameSite: 'lax',
+          maxAge: expect.any(Number),
+        })
+      );
       expect(res.json).toHaveBeenCalledWith({
-        token: 'signedToken',
-        user: { id: 7, username: 'u7', email: 'e7' },
+        user: { id: 7, username: 'u7', email: 'e7' }
       });
     });
 

@@ -1,10 +1,8 @@
-// test/integration/searchUsers.test.ts
-
 import request from 'supertest';
 import app from '../../src/app';
 
-describe('GET /api/users/search (full integration)', () => {
-  let token: string;
+describe('GET /api/users/search (full integration, cookie-based)', () => {
+  let cookies: string[];
 
   beforeAll(async () => {
     // 1) Register two users
@@ -26,7 +24,7 @@ describe('GET /api/users/search (full integration)', () => {
       })
       .expect(201);
 
-    // 2) Log in as one of them and grab the JWT
+    // 2) Log in and grab cookies
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({
@@ -35,17 +33,18 @@ describe('GET /api/users/search (full integration)', () => {
       })
       .expect(200);
 
-    token = loginRes.body.token;
-    expect(token).toBeTruthy();
+    // @ts-ignore
+    cookies = loginRes.headers['set-cookie'];
+    expect(cookies).toBeDefined();
   });
 
   it('returns usernames similar to query', async () => {
     const res = await request(app)
       .get('/api/users/search')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ query: 'emil', page: 1, limit: 10 });
+      .set('Cookie', cookies)
+      .query({ query: 'emil', page: 1, limit: 10 })
+      .expect(200);
 
-    expect(res.status).toBe(200);
     expect(
       Array.isArray(res.body.users) &&
       res.body.users.some((u: any) => u.username.includes('emil'))
