@@ -30,6 +30,7 @@
     "@aws-sdk/client-s3": "^3.826.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "csurf": "^1.11.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.9",
+    "@types/csurf": "^1.11.5",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.9",

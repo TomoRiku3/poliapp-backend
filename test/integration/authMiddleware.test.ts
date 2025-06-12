@@ -1,43 +1,64 @@
 import request from 'supertest';
 import app from '../../src/app';
 
-describe('Auth middleware protection (cookie-based)', () => {
-  it('rejects unauthenticated requests with 401', async () => {
+describe('Auth & CSRF middleware protection', () => {
+  it('rejects unauthenticated GET /api/users/me with 401', async () => {
     await request(app)
       .get('/api/users/me')
       .expect(401);
   });
 
-  it('allows authenticated requests to proceed with cookies', async () => {
-    // 1) Register a new user (sets cookie)
+  it('rejects POST /api/auth/register without CSRF token', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'authTester', email: 'auth@example.com', password: 'secure_pw' })
+      .expect(403);
+  });
+
+  it('supports full CSRF + cookie auth flow', async () => {
+    let cookies: string[] = [];
+    let csrfToken: string;
+
+    // 1) Fetch initial CSRF token
+    const csrfRes1 = await request(app)
+      .get('/api/csrf-token')
+      .expect(200);
+    csrfToken = csrfRes1.body.csrfToken;
+    cookies = cookies.concat(csrfRes1.headers['set-cookie'] || []);
+
+    // 2) Register with CSRF token
     const registerRes = await request(app)
       .post('/api/auth/register')
-      .send({
-        username: 'authTester',
-        email: 'auth@example.com',
-        password: 'secure_pw'
-      })
+      .set('Cookie', cookies)
+      .set('X-CSRF-Token', csrfToken)
+      .send({ username: 'authTester', email: 'auth@example.com', password: 'secure_pw' })
       .expect(201);
+    cookies = cookies.concat(registerRes.headers['set-cookie'] || []);
 
-    // 2) Log in and grab fresh cookie
+    // 3) Fetch new CSRF token after register
+    const csrfRes2 = await request(app)
+      .get('/api/csrf-token')
+      .set('Cookie', cookies)
+      .expect(200);
+    csrfToken = csrfRes2.body.csrfToken;
+    cookies = cookies.concat(csrfRes2.headers['set-cookie'] || []);
+
+    // 4) Login with CSRF token
     const loginRes = await request(app)
       .post('/api/auth/login')
-      .send({
-        email: 'auth@example.com',
-        password: 'secure_pw'
-      })
+      .set('Cookie', cookies)
+      .set('X-CSRF-Token', csrfToken)
+      .send({ email: 'auth@example.com', password: 'secure_pw' })
       .expect(200);
+    cookies = cookies.concat(loginRes.headers['set-cookie'] || []);
 
-    const cookies = loginRes.headers['set-cookie'];
-    expect(cookies).toBeDefined();
-
-    // 3) Call protected route with that cookie
-    const res = await request(app)
+    // 5) Call protected endpoint using cookies
+    const meRes = await request(app)
       .get('/api/users/me')
       .set('Cookie', cookies)
       .expect(200);
 
-    expect(res.body).toHaveProperty('id');
-    expect(res.body.email).toBe('auth@example.com');
+    expect(meRes.body).toHaveProperty('id');
+    expect(meRes.body.email).toBe('auth@example.com');
   });
 });

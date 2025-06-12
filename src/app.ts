@@ -8,6 +8,7 @@ import followRequestRoutes from './routes/userRoutes/followRequestRoute';
 import notificationRoutes from './routes/notificationRoute';
 import postRoutes from './routes/postRoute';
 import { errorHandler } from './middleware/errorHandler';
+import { csrfProtection, getCsrfToken } from './middleware/csrf';
 
 const app = express();
 
@@ -16,6 +17,12 @@ app.use(express.json());
 
 // 2) Cookie parser (register here)
 app.use(cookieParser());
+
+// Apply CSRF protection globally
+app.use(csrfProtection);
+
+// CSRF token endpoint
+app.get('/api/csrf-token', getCsrfToken);
 
 // Public auth endpoints
 app.use('/api/auth', authRoutes);
